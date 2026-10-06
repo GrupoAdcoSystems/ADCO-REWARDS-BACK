@@ -7,10 +7,12 @@ import {
   getStates,
   updateState,
 } from "../controllers/stateController";
+import { systemAuth } from "../middlewares/systemsAuth";
 
 const router = Router();
 
 router.get("/", authenticate, authorize("admin"), getStates);
+router.get("/adco-systems/states", systemAuth, getStates);
 router.post("/", authenticate, authorize("admin"), createState);
 router.put("/:id", authenticate, authorize("admin"), updateState);
 router.delete("/:id", authenticate, authorize("admin"), deleteState);

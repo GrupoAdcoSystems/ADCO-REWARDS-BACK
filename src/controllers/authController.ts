@@ -17,6 +17,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       company,
       state_id,
     } = req.body;
+
+    // console.log(req.body);
+
+    // return;
+    
     const pwError = validatePassword(password);
     if (pwError) {
       res.status(400).json({ message: pwError });
@@ -52,7 +57,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res
       .status(201)
       .json({ message: "Usuario registrado correctamente", id: user.id });
-  } catch {
+  } catch (e) {
+    console.error(e);
+
     res.status(500).json({ message: "Error al registrar" });
   }
 };
@@ -151,9 +158,7 @@ export const changePassword = async (
 
     res.json({ message: "Contraseña actualizada correctamente" });
   } catch {
-    res
-      .status(500)
-      .json({ message: "Error al cambiar la contraseña" });
+    res.status(500).json({ message: "Error al cambiar la contraseña" });
   }
 };
 
@@ -168,13 +173,26 @@ export const me = async (req: AuthRequest, res: Response): Promise<void> => {
       },
     });
 
-    
     if (!user) {
       res.status(404).json({ message: "Usuario no encontrado" });
       return;
     }
     res.json(user);
   } catch {
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+export const integration = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    console.log("llegoooooooooooooo");
+
+    res.status(200).json({ message: "Llegoooo" });
+    return;
+  } catch (error) {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };

@@ -14,6 +14,7 @@ import {
 } from "../controllers/userController";
 import { authenticate } from "../middlewares/authenticate";
 import { authorize } from "../middlewares/authorize";
+import { systemAuth } from "../middlewares/systemsAuth";
 
 const router = Router();
 
@@ -48,6 +49,8 @@ router.get("/", authenticate, authorize("admin"), getUsers);
 router.get("/directory", authenticate, getUserDirectory);
 router.get("/birthdays/month", authenticate, getBirthdaysThisMonth);
 router.get("/:id", authenticate, authorize("admin"), getUserById);
+
+router.get("/check-email/:email", systemAuth)
 
 /**
  * @swagger
