@@ -30,10 +30,13 @@ export const authActivity = async (
       return;
     }
 
-    if (!req.body.file) {
-      res
-        .status(400)
-        .json({ message: "Archivo de participacion no encontrado" });
+    const files: string[] = req.body.files ?? (req.body.file ? [req.body.file] : []);
+    if (files.length === 0) {
+      res.status(400).json({ message: "Archivo de participación no encontrado" });
+      return;
+    }
+    if (files.length > (activity.max_files ?? 1)) {
+      res.status(400).json({ message: `Máximo ${activity.max_files ?? 1} archivo(s) permitido(s)` });
       return;
     }
 

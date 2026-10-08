@@ -387,25 +387,23 @@ export const joinActivity = async (
     const userId = req.user!.id;
     const activityId = parseInt(String(req.params.id));
     const { questions } = req.body;
+    const files: string[] = req.body.files ?? (req.body.file ? [req.body.file] : []);
 
-    // Bloquea participaciones cuyo archivo no se subió realmente al bucket.
-    // El PUT firmado puede fallar en silencio (blob invalidado en Safari
-    // móvil, conexión caída, tipo de contenido inválido) y crear objetos
-    // de 0 bytes; rechazamos antes de escribir en la BD.
-    const fileCheck = await verifyActivityEntryFile(String(req.body.file ?? ""));
-    if (!fileCheck.ok) {
-      // Limpia el 0-byte que quedó huérfano para no ensuciar el bucket
-      if (fileCheck.reason === "empty" && req.body.file) {
-        await deleteActivityEntryFile(String(req.body.file));
+    for (const f of files) {
+      const fileCheck = await verifyActivityEntryFile(String(f));
+      if (!fileCheck.ok) {
+        if (fileCheck.reason === "empty") {
+          await deleteActivityEntryFile(String(f));
+        }
+        const message =
+          fileCheck.reason === "empty"
+            ? "Un archivo se subió vacío. Vuelve a intentar."
+            : fileCheck.reason === "not_found"
+              ? "No se encontró un archivo subido. Vuelve a intentar."
+              : "Falta un archivo o no se pudo verificar. Vuelve a intentar.";
+        res.status(400).json({ message });
+        return;
       }
-      const message =
-        fileCheck.reason === "empty"
-          ? "El archivo se subió vacío. Vuelve a intentar."
-          : fileCheck.reason === "not_found"
-            ? "No se encontró el archivo subido. Vuelve a intentar."
-            : "Falta el archivo o no se pudo verificar. Vuelve a intentar.";
-      res.status(400).json({ message });
-      return;
     }
 
     const activityExist = await ActivityEntry.findOne({
@@ -442,11 +440,13 @@ export const joinActivity = async (
       }
     }
 
+    const filesJson = JSON.stringify(files);
+
     if (activityExist?.dataValues) {
       await ActivityEntry.update(
         {
           status: "pending",
-          file: req.body.file,
+          file: filesJson,
         },
         {
           where: {
@@ -470,7 +470,7 @@ export const joinActivity = async (
         {
           user_id: userId,
           activity_id: activityId,
-          file: req.body.file,
+          file: filesJson,
         },
         { transaction: t },
       );

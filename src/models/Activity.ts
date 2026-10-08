@@ -15,6 +15,7 @@ interface ActivityAttributes {
   category: string;
   image: string;
   counts_for_travel: boolean;
+  max_files: number;
   archived_at?: Date | null;
   archive_label?: string | null;
   deleted_at?: Date | null;
@@ -24,7 +25,7 @@ interface ActivityAttributes {
 
 interface ActivityCreationAttributes extends Optional<
   ActivityAttributes,
-  "id" | "status" | "counts_for_travel" | "time_zone" | "archived_at" | "archive_label" | "deleted_at"
+  "id" | "status" | "counts_for_travel" | "max_files" | "time_zone" | "archived_at" | "archive_label" | "deleted_at"
 > {}
 
 class Activity
@@ -42,6 +43,7 @@ class Activity
   public time_zone!: string;
   public status!: ActivityStatus;
   public counts_for_travel!: boolean;
+  public max_files!: number;
   public archived_at?: Date | null;
   public archive_label?: string | null;
   public deleted_at?: Date | null;
@@ -78,6 +80,11 @@ Activity.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    max_files: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
     },
     archived_at: {
       type: DataTypes.DATE,
