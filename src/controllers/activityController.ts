@@ -553,7 +553,16 @@ export const getEntries = async (
       order: [["created_at", "DESC"]],
     });
 
-    const plainEntries = entries.map((e) => e.get({ plain: true }) as any);
+    const plainEntries = entries.map((e) => {
+      const plain = e.get({ plain: true }) as any;
+      try {
+        plain.files = JSON.parse(plain.file);
+      } catch {
+        plain.files = plain.file ? [plain.file] : [];
+      }
+      delete plain.file;
+      return plain;
+    });
 
     // Batch-load all answers for all questions/users found in the entries
     const allQuestionIds = plainEntries.flatMap((e) =>
@@ -624,7 +633,11 @@ export const reviewEntry = async (
         res.status(400).json({ message: "La razon de rechazo es obligatoria" });
         return;
       }
-      if (entry.file) await deleteActivityEntryFile(entry.file);
+      if (entry.file) {
+        let filesToDelete: string[] = [];
+        try { filesToDelete = JSON.parse(entry.file); } catch { filesToDelete = [entry.file]; }
+        for (const f of filesToDelete) await deleteActivityEntryFile(f);
+      }
 
       // Rechazar todas las respuestas pendientes de esta participación
       const questions = await ActivityQuestion.findAll({
@@ -993,7 +1006,17 @@ export const getArchivedEntries = async (
       ],
       order: [["archived_at", "DESC"], ["id", "DESC"]],
     });
-    res.json(entries);
+    const result = entries.map((e) => {
+      const plain = e.get({ plain: true }) as any;
+      try {
+        plain.files = JSON.parse(plain.file);
+      } catch {
+        plain.files = plain.file ? [plain.file] : [];
+      }
+      delete plain.file;
+      return plain;
+    });
+    res.json(result);
   } catch {
     res.status(500).json({ message: "Error interno del servidor" });
   }
@@ -1162,8 +1185,12 @@ export const revertEntry = async (
       throw error;
     }
 
-    // Borrar archivo
-    if (entry.file) await deleteActivityEntryFile(entry.file);
+    // Borrar archivos
+    if (entry.file) {
+      let filesToDelete: string[] = [];
+      try { filesToDelete = JSON.parse(entry.file); } catch { filesToDelete = [entry.file]; }
+      for (const f of filesToDelete) await deleteActivityEntryFile(f);
+    }
 
     // Crear notificación
     await createNotification(
